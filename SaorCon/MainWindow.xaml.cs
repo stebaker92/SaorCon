@@ -7,7 +7,7 @@ using Windows.Devices.Bluetooth;
 using Windows.Devices.Enumeration;
 using System.Windows.Markup;
 using Hardcodet.Wpf.TaskbarNotification;
-using System.Linq;
+using System.Drawing;
 
 namespace SaorCon
 {
@@ -28,8 +28,6 @@ namespace SaorCon
             m_deviceWatcher.Added += OnBluetoothDeviceAdded;
             m_deviceWatcher.Removed += OnBluetoothDeviceRemoved;
             m_deviceWatcher.Start();
-            
-
         }
 
         private void OnBluetoothDeviceAdded( DeviceWatcher sender, DeviceInformation device )
@@ -39,7 +37,7 @@ namespace SaorCon
                 Task.Factory.StartNew( async () =>
                     {
                         var boseDevice = new BoseDeviceDefault( await BluetoothDevice.FromIdAsync( device.Id ) );
-                        boseDevice.BatteryUpdated += ShowNotification;
+                        boseDevice.BatteryUpdated += HandleBatteryLevelUpdate;
                         m_devices.Add( boseDevice );
 
                         if ( m_quickMenu != null )
@@ -49,11 +47,17 @@ namespace SaorCon
                     } );
             }
         }
-        
-        private void ShowNotification(BoseDeviceDefault device, int batteryLevel)
+
+        private void HandleBatteryLevelUpdate(BoseDeviceDefault device, int batteryLevel)
         {
             const int lowBatteryErrorThreshold = 20;
             const int lowBatteryWarnThreshold = 30;
+
+            // TODO - this code assumes we only have 1 Bose device connected
+
+            var iconToUse = SelectIcon(batteryLevel);
+            // See https://stackoverflow.com/questions/74466/how-do-i-use-an-icon-that-is-a-resource-in-wpf
+            MyNotifyIcon.Icon = System.Drawing.Icon.FromHandle(iconToUse.Handle);
 
             if (batteryLevel <= lowBatteryErrorThreshold && device.LastLowBatteryNotificationPercentage > lowBatteryErrorThreshold)
             {
@@ -64,6 +68,20 @@ namespace SaorCon
             {
                 MyNotifyIcon.ShowBalloonTip("Low Battery Warning", $"{device.DeviceName} has under {lowBatteryWarnThreshold}% battery remaining", BalloonIcon.Warning);
                 device.LastLowBatteryNotificationPercentage = lowBatteryWarnThreshold;
+            }
+        }
+
+        private Icon SelectIcon(int batteryLevel)
+        {
+            switch (batteryLevel)
+            {
+                case int n when n >= 70:
+                default:
+                    return Properties.Resources.BatteryIcon_Hi;
+                case int n when n < 70 && n >= 30:
+                    return Properties.Resources.BatteryIcon_Mid;
+                case int n when n < 30:
+                    return Properties.Resources.BatteryIcon_Low;
             }
         }
 
