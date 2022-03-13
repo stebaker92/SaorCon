@@ -145,4 +145,13 @@
   <data name="SourceRepo" xml:space="preserve">
     <value>https://github.com/platinum95/SaorCon</value>
   </data>
+  <data name="BatteryIcon_Hi" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\icons\batteryicon_hi.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="BatteryIcon_Low" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\icons\batteryicon_low.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="BatteryIcon_Mid" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\icons\batteryicon_mid.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>

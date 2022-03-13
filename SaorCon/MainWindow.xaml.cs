@@ -6,7 +6,8 @@ using System.Windows.Input;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Enumeration;
 using System.Windows.Markup;
-
+using Hardcodet.Wpf.TaskbarNotification;
+using System.Linq;
 
 namespace SaorCon
 {
@@ -27,6 +28,8 @@ namespace SaorCon
             m_deviceWatcher.Added += OnBluetoothDeviceAdded;
             m_deviceWatcher.Removed += OnBluetoothDeviceRemoved;
             m_deviceWatcher.Start();
+            
+
         }
 
         private void OnBluetoothDeviceAdded( DeviceWatcher sender, DeviceInformation device )
@@ -36,6 +39,7 @@ namespace SaorCon
                 Task.Factory.StartNew( async () =>
                     {
                         var boseDevice = new BoseDeviceDefault( await BluetoothDevice.FromIdAsync( device.Id ) );
+                        boseDevice.BatteryUpdated += ShowNotification;
                         m_devices.Add( boseDevice );
 
                         if ( m_quickMenu != null )
@@ -45,10 +49,28 @@ namespace SaorCon
                     } );
             }
         }
+        
+        private void ShowNotification(BoseDeviceDefault device, int batteryLevel)
+        {
+            const int lowBatteryErrorThreshold = 20;
+            const int lowBatteryWarnThreshold = 30;
+
+            if (batteryLevel <= lowBatteryErrorThreshold && device.LastLowBatteryNotificationPercentage > lowBatteryErrorThreshold)
+            {
+                MyNotifyIcon.ShowBalloonTip("Low Battery Warning", $"{device.DeviceName} has under {lowBatteryErrorThreshold}% battery remaining", BalloonIcon.Error);
+                device.LastLowBatteryNotificationPercentage = lowBatteryErrorThreshold;
+            }
+            else if (batteryLevel <= lowBatteryWarnThreshold && device.LastLowBatteryNotificationPercentage > lowBatteryWarnThreshold)
+            {
+                MyNotifyIcon.ShowBalloonTip("Low Battery Warning", $"{device.DeviceName} has under {lowBatteryWarnThreshold}% battery remaining", BalloonIcon.Warning);
+                device.LastLowBatteryNotificationPercentage = lowBatteryWarnThreshold;
+            }
+        }
 
         private void OnBluetoothDeviceRemoved( DeviceWatcher sender, DeviceInformationUpdate devInfo )
         {
             m_devices.RemoveAll( x => x.DeviceId == devInfo.Id );
+            
             if ( m_quickMenu != null )
             {
                 m_quickMenu.OnDeviceRemoved( devInfo.Id );

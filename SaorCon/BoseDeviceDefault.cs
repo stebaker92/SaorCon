@@ -41,6 +41,7 @@ namespace SaorCon
 
         public bool     Connected       { get => bluetoothClient != null && bluetoothClient.Connected; }
         public bool     SoftConnect     { get; private set; } = false;
+        public int LastLowBatteryNotificationPercentage { get; set; } = 100;
         public Int16    AncLevel        { get; private set; } = -1;
         public Int16    BatteryLevel    { get; private set; } = -1;
         public string   DeviceName      { get; private set; } = "Unknown Device";
@@ -84,6 +85,7 @@ namespace SaorCon
 
             bluetoothClient = null;
             SoftConnect = false;
+            LastLowBatteryNotificationPercentage = 100;
 
             foreach ( var observer in m_observers )
                 observer.OnNext( BoseMessage.DisconnectMessage );
@@ -216,11 +218,13 @@ namespace SaorCon
 
         }
 
-        private static Int16 ConvertBatteryLevel( byte[] payload )
+        private Int16 ConvertBatteryLevel( byte[] payload )
         {
             if ( payload.Length != 1 )
                 //TODO
                 return -1;
+
+            BatteryUpdated(this, Convert.ToInt16(payload[0]));
 
             return Convert.ToInt16( payload[0] );
         }
@@ -358,11 +362,15 @@ namespace SaorCon
 
         delegate void MessageHandler( BoseDeviceDefault sender, byte[] payload = null );
 
+        public delegate void BatteryLevelMessageHandler(BoseDeviceDefault sender, int level);
+        
+        public event BatteryLevelMessageHandler BatteryUpdated;
+
         private Dictionary<BoseMessage, MessageHandler> m_messageHandlers = new Dictionary<BoseMessage, MessageHandler>()
         {
             { BoseMessage.ConnectAckMessage, new MessageHandler( (sender, p) => sender.SoftConnect = true ) },
             { BoseMessage.AncLevelMessage, new MessageHandler( (sender, p) => sender.AncLevel = ConvertAncLevel(p) ) },
-            { BoseMessage.BatteryLevelMessage, new MessageHandler( (sender, p) => sender.BatteryLevel = ConvertBatteryLevel(p) ) }
+            { BoseMessage.BatteryLevelMessage, new MessageHandler( (sender, p) => sender.BatteryLevel = sender.ConvertBatteryLevel(p) ) }
         };
 
         private ulong m_requestCooldown = 0;
