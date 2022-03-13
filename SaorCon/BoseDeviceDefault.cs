@@ -72,6 +72,9 @@ namespace SaorCon
 
             m_requestMutex.WaitOne();
             m_requestMutex.Dispose();
+            // Disposing a mutex seems to cause a few bugs & crashes randomly when reconnecting a device.
+            // They are light resources so the disposal has been removed here as it's not required
+            // m_requestMutex.Dispose();
 
             if ( bluetoothStream != null )
             {
