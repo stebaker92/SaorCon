@@ -87,7 +87,9 @@ jobs:
       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
     
     - name: Check outputs
-      run: echo ${{ steps.vars.outputs.sha_short }}
+      run: |
+        echo ${{ steps.vars.outputs.sha_short }}
+        ${{ steps.vars.outputs.sha_short }} > sha.txt
 
     - uses: dev-drprasad/delete-older-releases@v0.2.0
       with:
