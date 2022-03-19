@@ -365,9 +365,12 @@ namespace SaorCon
 
         delegate void MessageHandler( BoseDeviceDefault sender, byte[] payload = null );
 
+        public delegate void StatusChangeHandler(BoseDeviceDefault sender, bool connected);
+
         public delegate void BatteryLevelMessageHandler(BoseDeviceDefault sender, int level);
         
         public event BatteryLevelMessageHandler BatteryUpdated;
+        public event StatusChangeHandler OnDisconnected;
 
         private Dictionary<BoseMessage, MessageHandler> m_messageHandlers = new Dictionary<BoseMessage, MessageHandler>()
         {

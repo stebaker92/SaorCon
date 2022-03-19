@@ -38,6 +38,7 @@ namespace SaorCon
                     {
                         var boseDevice = new BoseDeviceDefault( await BluetoothDevice.FromIdAsync( device.Id ) );
                         boseDevice.BatteryUpdated += HandleBatteryLevelUpdate;
+                        boseDevice.OnDisconnected += OnDisconnect;
                         m_devices.Add( boseDevice );
 
                         if ( m_quickMenu != null )
@@ -45,6 +46,15 @@ namespace SaorCon
                             m_quickMenu.OnDeviceAdded( boseDevice );
                         }
                     } );
+            }
+        }
+
+        private void OnDisconnect(BoseDeviceDefault device, bool connected)
+        {
+            if (!connected)
+            {
+                var icon = Properties.Resources.AppIcon;
+                MyNotifyIcon.Icon = System.Drawing.Icon.FromHandle(icon.Handle);
             }
         }
 
