@@ -54,7 +54,7 @@ jobs:
     - name: Update version
       run: |
         $path = ".\SaorCon\Properties\AssemblyInfo.cs"
-        $pattern = '^\[assembly: AssemblyVersion\("(.*)"\)\]'
+        $pattern = '^\[assembly: AssemblyVersion\("(.*)"\)\]$'
 
         (Get-Content $path) | ForEach-Object {
           if($_ -match $pattern){
@@ -69,7 +69,7 @@ jobs:
                 $_
             }
         } | Set-Content $path
-        echo '[assembly: AssemblyVersion("{0}-{1}")]' -f $newVersion, $date
+        cat $path
 
 
     - name: Setup MSBuild.exe
