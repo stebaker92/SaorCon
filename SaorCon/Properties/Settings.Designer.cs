@@ -22,5 +22,17 @@ namespace SaorCon.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DisableNotifications {
+            get {
+                return ((bool)(this["DisableNotifications"]));
+            }
+            set {
+                this["DisableNotifications"] = value;
+            }
+        }
     }
 }

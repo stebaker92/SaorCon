@@ -63,6 +63,8 @@ namespace SaorCon
             const int lowBatteryErrorThreshold = 20;
             const int lowBatteryWarnThreshold = 30;
 
+            var showNotification  = Properties.Settings.Default.ShowNotifications;
+
             // TODO - this code assumes we only have 1 Bose device connected
 
             var iconToUse = SelectIcon(batteryLevel);
@@ -71,12 +73,20 @@ namespace SaorCon
 
             if (batteryLevel <= lowBatteryErrorThreshold && device.LastLowBatteryNotificationPercentage > lowBatteryErrorThreshold)
             {
-                MyNotifyIcon.ShowBalloonTip("Low Battery Warning", $"{device.DeviceName} has under {lowBatteryErrorThreshold}% battery remaining", BalloonIcon.Error);
+                if (showNotification)
+                {
+                    MyNotifyIcon.ShowBalloonTip("Low Battery Warning", $"{device.DeviceName} has under {lowBatteryErrorThreshold}% battery remaining", BalloonIcon.Error);
+                }
+
                 device.LastLowBatteryNotificationPercentage = lowBatteryErrorThreshold;
             }
             else if (batteryLevel <= lowBatteryWarnThreshold && device.LastLowBatteryNotificationPercentage > lowBatteryWarnThreshold)
             {
-                MyNotifyIcon.ShowBalloonTip("Low Battery Warning", $"{device.DeviceName} has under {lowBatteryWarnThreshold}% battery remaining", BalloonIcon.Warning);
+                if (showNotification)
+                {
+                    MyNotifyIcon.ShowBalloonTip("Low Battery Warning", $"{device.DeviceName} has under {lowBatteryWarnThreshold}% battery remaining", BalloonIcon.Warning);
+                }
+                
                 device.LastLowBatteryNotificationPercentage = lowBatteryWarnThreshold;
             }
         }
