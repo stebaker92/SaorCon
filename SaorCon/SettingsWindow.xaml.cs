@@ -13,6 +13,7 @@ namespace SaorCon
             PopulateAboutTab();
             m_startsOnBoot = System.IO.File.Exists( ShortcutPath );
             StartOnBootSelection.IsChecked = m_startsOnBoot;
+            DisableNotificationsSelection.IsChecked = Properties.Settings.Default.DisableNotifications;
         }
 
         private void PopulateAboutTab()
@@ -57,6 +58,10 @@ namespace SaorCon
         {
             if ( StartOnBootSelection.IsChecked.HasValue && ( m_startsOnBoot != StartOnBootSelection.IsChecked.Value ) )
                 ModifyShortcut( StartOnBootSelection.IsChecked.Value );
+            
+            Properties.Settings.Default.DisableNotifications = DisableNotificationsSelection.IsChecked.Value;
+            Properties.Settings.Default.Save(); 
+            
             this.Close();
         }
 

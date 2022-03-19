@@ -13,8 +13,11 @@
         <TabControl Background="White" Height="Auto" HorizontalAlignment="Stretch" Margin="10, 10, 10, 10" Padding="10">
             <TabItem Header="Settings" Height="Auto">
                 <Grid Height="Auto">
-                    <Border BorderBrush="#FFCCCCCC" Height="40" BorderThickness="1" HorizontalAlignment="Stretch" VerticalAlignment="Top" Padding="10">
-                        <CheckBox x:Name="StartOnBootSelection" Content="Enable at boot" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                    <Border BorderBrush="#FFCCCCCC" Height="60" BorderThickness="1" HorizontalAlignment="Stretch" VerticalAlignment="Top" Padding="10">
+                        <StackPanel>
+                            <CheckBox x:Name="DisableNotificationsSelection" Content="Disable notifications" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                            <CheckBox x:Name="StartOnBootSelection" Content="Enable at boot" Height="Auto" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        </StackPanel>
                     </Border>
                 </Grid>
             </TabItem>

@@ -63,7 +63,7 @@ namespace SaorCon
             const int lowBatteryErrorThreshold = 20;
             const int lowBatteryWarnThreshold = 30;
 
-            var showNotification  = Properties.Settings.Default.ShowNotifications;
+            var showNotification  = !Properties.Settings.Default.DisableNotifications;
 
             // TODO - this code assumes we only have 1 Bose device connected
 
