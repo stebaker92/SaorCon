@@ -54,14 +54,13 @@ jobs:
     - name: Update version
       run: |
         $path = ".\SaorCon\Properties\AssemblyInfo.cs"
-        $pattern = '^\[assembly: AssemblyVersion\("(.*)"\)\]$'
-
+        $pattern = '^\[assembly: AssemblyVersion\(\ "(.*)"\ \)\]$'
         (Get-Content $path) | ForEach-Object {
-          if($_ -match $pattern){
-          # We have found the matching line
-          # Edit the version number and put back.
+            if($_ -match $pattern){
+            # We have found the matching line
+            # Edit the version number and put back.
                 $fileVersion = [version]$matches[1]
-                $newVersion = "{0}.{1}.{2}.{3}" -f $fileVersion.Major, $fileVersion.Minor, $fileVersion.Build, ($fileVersion.Revision + 1)
+                $newVersion = "{0}.{1}.{2}.{3}" -f $fileVersion.Major, $fileVersion.Minor, $fileVersion.Build, ($fileVersion.Revision)
                 $date = Get-Date -format yyyy-MM-dd 
                 '[assembly: AssemblyVersion("{0}-{1}")]' -f $newVersion, $date
             } else {
@@ -69,8 +68,6 @@ jobs:
                 $_
             }
         } | Set-Content $path
-        cat $path
-
 
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.1
