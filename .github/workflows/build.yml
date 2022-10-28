@@ -1,0 +1,84 @@
+name: App Build
+
+on:
+  push:
+    branches: 
+    - "**"
+    tags:
+    - v*
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    env:
+      Solution_Path: SaorCon.sln
+      UWP_Project_Path: SaorCon/SaorCon.csproj
+      UWP_Project_Directory: .\SaorCon
+
+    steps:
+
+    - name: Configure Pagefile
+      uses: al-cheb/configure-pagefile-action@v1.2
+      with:
+        minimum-size: 8GB
+        maximum-size: 8GB
+        disk-root: "C:"
+    
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        
+    - name: 'Get Previous tag'
+      id: previoustag
+      uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      with:
+        fallback: 1.0.0 # Optional fallback tag to use when no tag can be found
+
+    - name: Echo tag
+      run: echo ${{steps.previoustag.outputs.tag}}
+
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.1
+        
+    - name: Build the solution
+      run: msbuild $env:Solution_Path /p:Platform=x86 /p:AppxBundle=$env:AppxBundle /p:AppxBundlePlatforms="x86|x64" /p:AppxPackageDir=C:\DeployOutput /restore
+      env:
+        AppxBundle: Always
+        BuildMode: StoreUpload
+        Configuration: Release
+   
+    - name: Create archive
+      run: Compress-Archive -Path .\SaorCon\bin\Release\* -DestinationPath .\SaorCon\bin\Release\StorePackage_${{steps.previoustag.outputs.tag}}.zip
+
+    - name: Set outputs
+      id: vars
+      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+    
+    - name: Output SHA
+      run: |
+        echo ${{ steps.vars.outputs.sha_short }}
+        echo ${{ steps.vars.outputs.sha_short }} > sha.txt
+    
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{steps.previoustag.outputs.tag}}
+        release_name: ${{steps.previoustag.outputs.tag}}-${{ steps.vars.outputs.sha_short }}
+        draft: false
+        prerelease: false
+
+    - name: Upload release asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: .\SaorCon\bin\Release\StorePackage_${{steps.previoustag.outputs.tag}}.zip
+        asset_name: StorePackage_${{steps.previoustag.outputs.tag}}.zip
+        asset_content_type: application/zip
