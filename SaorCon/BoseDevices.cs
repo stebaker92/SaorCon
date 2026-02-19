@@ -32,13 +32,16 @@ namespace SaorCon
 
         public void Dispose()
         {
-            if ( !( _observer == null ) ) _observers.Remove( _observer );
+            if ( !( _observer == null ) )
+            {
+                _observers.Remove( _observer );
+            }
         }
     }
 
-    public abstract class BoseBluetoothDevice<T,Command> : IDevice
-        where T : BoseBluetoothDevice<T, Command>
-        where Command : Enum
+    public abstract class BoseBluetoothDevice<TDevice,TCommand> : IDevice
+        where TDevice : BoseBluetoothDevice<TDevice, TCommand>
+        where TCommand : Enum
     {
         public bool     Connected   { get => bluetoothClient != null && bluetoothClient.Connected; }
         public string   DisplayName { get; private set; } = "Unknown Device";
@@ -52,7 +55,9 @@ namespace SaorCon
             DeviceId = device.DeviceId;
 
             if ( bluetoothDevice.ConnectionStatus == BluetoothConnectionStatus.Connected )
+            {
                 Connect();
+            }
 
             bluetoothDevice.ConnectionStatusChanged += DeviceConnectionStateChanged;
         }
@@ -63,7 +68,7 @@ namespace SaorCon
             bluetoothDevice = null;
         }
 
-        protected virtual void Disconnect()
+        private void Disconnect()
         {
             m_readTaskCancellation.Cancel();
             m_requestTaskToken?.Cancel();
@@ -79,7 +84,9 @@ namespace SaorCon
             }
 
             if ( bluetoothClient != null && bluetoothClient.Connected )
+            {
                 bluetoothClient.Dispose();
+            }
 
             bluetoothClient = null;
             SoftConnect = false;
@@ -105,11 +112,13 @@ namespace SaorCon
             return Task.FromResult( result );
         }
 
-        protected IAsyncResult SendCommand( Command command, byte[] payload = null, bool force = false )
+        protected IAsyncResult SendCommand( TCommand command, byte[] payload = null, bool force = false )
         {
             // TODO - these should be sent to a fixed-size buffer to avoid a barrage of requests
             if ( !bluetoothClient.Connected )
+            {
                 throw new Exception();
+            }
 
             var currentTime = Convert.ToUInt64( new TimeSpan( DateTime.Now.Ticks ).TotalMilliseconds );
             if ( !force && currentTime < m_requestCooldown )
@@ -120,7 +129,7 @@ namespace SaorCon
                 m_requestTaskToken = new CancellationTokenSource();
 
                 m_requestMutex.WaitOne();
-                m_requestBuffer = new Tuple<Command, byte[]>( command, payload );
+                m_requestBuffer = new Tuple<TCommand, byte[]>( command, payload );
                 m_requestMutex.ReleaseMutex();
 
                 CancellationToken token = m_requestTaskToken.Token;
@@ -194,7 +203,9 @@ namespace SaorCon
             var payloadLength = header[3];
 
             if ( payloadLength == 0 )
+            {
                 return null;
+            }
 
             var payload = new byte[payloadLength];
             bluetoothStream.Read( payload, 0, payload.Length );
@@ -205,7 +216,9 @@ namespace SaorCon
         private void ReadIncomingMessages()
         {
             if ( !Connected )
+            {
                 return;
+            }
 
             while ( bluetoothStream.DataAvailable )
             {
@@ -217,19 +230,25 @@ namespace SaorCon
                 var payload = GetPayloadFromHeader( header );
 
                 if ( !knownMessage )
+                {
                     continue;
+                }
 
-                m_messageHandlers[message]( (T)this, payload );
+                m_messageHandlers[message]( (TDevice)this, payload );
 
                 foreach ( var observer in m_observers )
+                {
                     observer.OnNext( message );
+                }
             }
         }
 
         public IAsyncResult Connect()
         {
             if ( bluetoothClient != null && bluetoothClient.Connected )
+            {
                 return null;
+            }
 
             bluetoothClient = new BluetoothClient();
 
@@ -245,7 +264,9 @@ namespace SaorCon
             {
                 bluetoothClient.EndConnect( result );
                 if ( !Connected )
+                {
                     throw new Exception();
+                }
             }
             catch ( Exception )
             {
@@ -280,24 +301,30 @@ namespace SaorCon
             if ( newState == BluetoothConnectionStatus.Connected )
             {
                 if ( bluetoothClient == null )
+                {
                     Connect();
+                }
             }
             else
+            {
                 Disconnect();
+            }
         }
 
         public IDisposable Subscribe( IObserver<DeviceStatusMessage> observer )
         {
             if ( !m_observers.Contains( observer ) )
+            {
                 m_observers.Add( observer );
+            }
 
             return new BoseUnsubscriber<DeviceStatusMessage>( m_observers, observer );
         }
 
-        protected abstract Dictionary<Command, byte[]> CommandCodes { get; }
+        protected abstract Dictionary<TCommand, byte[]> CommandCodes { get; }
         protected abstract Dictionary<DeviceStatusMessage, byte[]> MessageCodes { get; }
 
-        protected delegate void MessageHandler( T sender, byte[] payload = null );
+        protected delegate void MessageHandler( TDevice sender, byte[] payload = null );
         protected abstract Dictionary<DeviceStatusMessage, MessageHandler> m_messageHandlers { get; }
         protected List<IObserver<DeviceStatusMessage>> m_observers = new List<IObserver<DeviceStatusMessage>>();
 
@@ -308,7 +335,7 @@ namespace SaorCon
 
         private static readonly int BoseRFCommChannel = 8;
         private ulong m_requestCooldown = 0;
-        private Tuple<Command, byte[]> m_requestBuffer;
+        private Tuple<TCommand, byte[]> m_requestBuffer;
         private CancellationTokenSource m_requestTaskToken = new CancellationTokenSource();
         private Mutex m_requestMutex = new Mutex();
     }
@@ -333,17 +360,27 @@ namespace SaorCon
         public void SetAncLevel( short level )
         {
             if ( !Connected )
+            {
                 return;
+            }
 
             if ( level == 1 )
+            {
                 level = 3;
+            }
             else if ( level == 2 )
+            {
                 level = 1;
+            }
             else if ( level != 0 )
+            {
                 throw new ArgumentOutOfRangeException( "Invalid ANC level" );
+            }
 
             if ( m_ancLevelSet == level )
+            {
                 return;
+            }
 
             m_ancLevelSet = level;
             SendCommand( BoseCommand.SetAncCommand, new byte[] { Convert.ToByte( level ) } );
@@ -359,9 +396,18 @@ namespace SaorCon
 
             Int16 level = Convert.ToInt16( payload[0] );
 
-            if ( level == 1 ) level = 2;
-            else if ( level == 3 ) level = 1;
-            else if ( level != 0 ) throw new ArgumentException( $"Received invalid ANC level: {level}" );
+            if ( level == 1 )
+            {
+                level = 2;
+            }
+            else if ( level == 3 )
+            {
+                level = 1;
+            }
+            else if ( level != 0 )
+            {
+                throw new ArgumentException( $"Received invalid ANC level: {level}" );
+            }
 
             return level;
         }
@@ -421,14 +467,20 @@ namespace SaorCon
         public void SetAncLevel( Int16 level )
         {
             if ( !Connected )
+            {
                 return;
+            }
 
             if ( level > 10 || level < 0 )
+            {
                 throw new ArgumentOutOfRangeException( "Invalid ANC level" );
+            }
 
             var convertedLevel = (short)( 10 - level );
             if ( m_ancLevelSet == convertedLevel )
+            {
                 return;
+            }
 
             m_ancLevelSet = convertedLevel;
             AncLevel = level;
