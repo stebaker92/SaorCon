@@ -236,10 +236,10 @@ namespace SaorCon
             var address = new BluetoothAddress( unchecked((long)bluetoothDevice.BluetoothAddress) ); // Bitwise conversion
             var bluetoothEndPoint = new BluetoothEndPoint( address, BluetoothService.SerialPort, BoseRFCommChannel );
 
-            return bluetoothClient.BeginConnect( bluetoothEndPoint, new AsyncCallback( OnConnected ), null );
+            return bluetoothClient.BeginConnect( bluetoothEndPoint, new AsyncCallback( HandleClientConnect ), null );
         }
 
-        protected virtual void OnConnected( IAsyncResult result )
+        private void HandleClientConnect( IAsyncResult result )
         {
             try
             {
@@ -266,7 +266,12 @@ namespace SaorCon
                     Thread.Sleep( 1000 );
                 }
             }, token );
+
+            OnConnected();
         }
+
+        protected virtual void OnConnected()
+        {}
 
         private void DeviceConnectionStateChanged( BluetoothDevice sender, object args )
         {
@@ -318,9 +323,8 @@ namespace SaorCon
         public BoseDeviceQC35( BluetoothDevice device ) : base( device )
         {}
 
-        protected override void OnConnected( IAsyncResult result )
+        protected override void OnConnected()
         {
-            base.OnConnected( result );
             SendCommand( BoseCommand.ConnectCommand, force: true );
             SendCommand( BoseCommand.QueryStatusCommand, force: true );
             SendCommand( BoseCommand.QueryBatteryCommand, force: true );
@@ -407,9 +411,8 @@ namespace SaorCon
         public BoseDeviceNC700( BluetoothDevice device ) : base( device )
         { }
 
-        protected override void OnConnected( IAsyncResult result )
+        protected override void OnConnected()
         {
-            base.OnConnected( result );
             SendCommand( BoseCommand.ConnectCommand, force: true );
             SendCommand( BoseCommand.QueryStatusCommand, force: true );
             SendCommand( BoseCommand.QueryBatteryCommand, force: true );
